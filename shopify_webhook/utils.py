@@ -240,7 +240,7 @@ def process_order(order, data, send_email=False):
         # Process the line item. If the enrollment throws
         # an exception, we throw that exception up the stack so we can
         # attempt to retry order processing.
-        process_line_item(order, item)
+        process_line_item(order, item, data['customer'])
         logger.debug('Successfully processed line item '
                      '%s for order %s' % (item, order.id))
 
@@ -252,7 +252,7 @@ def process_order(order, data, send_email=False):
     return order
 
 
-def process_line_item(order, item):
+def process_line_item(order, item, customer):
     """Process a line item of an order.
 
     Extract sku and properties.email, create an OrderItem, create an
@@ -262,10 +262,7 @@ def process_line_item(order, item):
 
     # Fetch relevant fields from the item
     sku = item['sku']
-    email = next(
-        p['value'] for p in item['properties']
-        if p['name'] == 'email'
-    )
+    email = customer['email']
 
     # Store line item, prop
     order_item, created = OrderItem.objects.get_or_create(
