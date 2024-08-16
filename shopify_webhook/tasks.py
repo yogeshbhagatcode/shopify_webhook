@@ -56,7 +56,7 @@ class OrderTask(Task):
              max_retries=3,
              soft_time_limit=5,
              base=OrderTask,
-             autoretry_for=(HTTPError,))
+             autoretry_for=(HTTPError,), name='shopify_webhook.process')
 def process(self, data, send_email=False):
     """Parse input data for line items, and create enrollments.
 
