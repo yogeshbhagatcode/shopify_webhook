@@ -20,6 +20,10 @@ from .models import ShopifyOrderItem as OrderItem
 from .models import JSONWebhookData
 
 
+# settings.WEBHOOK_RECEIVER_LMS_BASE_URL = 'http://local.overhang.io:8000'
+# settings.WEBHOOK_RECEIVER_EDX_OAUTH2_KEY = 'webhook_receiver'
+# settings.WEBHOOK_RECEIVER_EDX_OAUTH2_SECRET = 'mdKEVw7gJfUS684vG9L2mm7KzUxZsY6P'
+
 EDX_BULK_ENROLLMENT_API_PATH = '%s/api/bulk_enroll/v1/bulk_enroll'
 
 logger = logging.getLogger(__name__)
