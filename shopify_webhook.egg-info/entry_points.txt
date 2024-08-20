@@ -1,2 +1,3 @@
 [lms.djangoapp]
 shopify_webhook = shopify_webhook.apps:ShopifyWebhookConfig
+
