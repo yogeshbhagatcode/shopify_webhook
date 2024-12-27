@@ -23,48 +23,50 @@ class OrderTask(Task):
 
     def on_success(self, retval, task_id, args, kwargs):
         "Success handler: log successful order processing."
-        logger.info('Successfully processed '
-                    'order %s' % self.order.id)
+        logger.info("Successfully processed order %s" % self.order.id)
 
     def on_retry(self, exc, task_id, args, kwargs, einfo):
         """Retry handler: log an exception stack trace and a prose message,
         then save the order with an ERROR status.
 
         """
-        logger.warning('Failed to fully '
-                       'process order %s '
-                       '(task ID %s), retrying: %s' % (self.order.id,
-                                                       task_id,
-                                                       exc))
+        logger.warning(
+            "Failed to fully "
+            "process order %s "
+            "(task ID %s), retrying: %s" % (self.order.id, task_id, exc)
+        )
 
     def on_failure(self, exc, task_id, args, kwargs, einfo):
         """Failure handler: log an exception stack trace and a prose message,
         then save the order with an ERROR status
 
         """
-        logger.error('Failed to fully '
-                     'process order %s '
-                     '(task ID %s): %s' % (self.order.id,
-                                           task_id,
-                                           exc))
+        logger.error(
+            "Failed to fully "
+            "process order %s "
+            "(task ID %s): %s" % (self.order.id, task_id, exc)
+        )
         self.order.fail()
         with transaction.atomic():
             self.order.save()
 
 
-@shared_task(bind=True,
-             max_retries=3,
-             soft_time_limit=5,
-             base=OrderTask,
-             autoretry_for=(HTTPError,), name='shopify_webhook.process')
-def process(self, data, send_email=False):
+@shared_task(
+    bind=True,
+    max_retries=3,
+    soft_time_limit=5,
+    base=OrderTask,
+    autoretry_for=(HTTPError,),
+    name="shopify_webhook.process",
+)
+def process(self, data, retrying_order=False):
     """Parse input data for line items, and create enrollments.
 
     On any error, raise the exception in order to be handled by
     on_failure().
     """
 
-    logger.debug('Processing order data: %s' % data)
-    self.order = Order.objects.get(id=data['id'])
+    logger.debug("Processing order data: %s" % data)
+    self.order = Order.objects.get(id=data["id"])
 
-    process_order(self.order, data, send_email)
+    process_order(self.order, data, retrying_order=retrying_order)

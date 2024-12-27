@@ -1,12 +1,12 @@
 .. shopify_webhook documentation top level file, created by
-   sphinx-quickstart on Fri Jul 08 12:35:36 2022.
+   sphinx-quickstart on Tue Aug 20 16:22:06 2024.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
 shopify_webhook
-===========
+===============
 
-Reports for CME 
+One-line description for README and other doc files.
 
 Contents:
 
@@ -15,15 +15,19 @@ Contents:
 
    readme
    getting_started
+   quickstarts/index
+   concepts/index
+   how-tos/index
    testing
    internationalization
    modules
    changelog
    decisions
+   references/index
 
 
 Indices and tables
-==================
+##################
 
 * :ref:`genindex`
 * :ref:`modindex`

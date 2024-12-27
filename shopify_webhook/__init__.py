@@ -1,8 +1,10 @@
+"""
+One-line description for README and other doc files.
+"""
 
+__version__ = "0.1.0"
 
-__version__ = '0.1.0'
-
-default_app_config = 'shopify_webhook.apps.ShopifyWebhookConfig'
+default_app_config = "shopify_webhook.apps.ShopifyWebhookConfig"
 
 
 class STATE:
@@ -12,8 +14,8 @@ class STATE:
     ERROR = -1
 
     CHOICES = (
-        (NEW, 'New'),
-        (PROCESSING, 'Processing'),
-        (PROCESSED, 'Processed'),
-        (ERROR, 'Error'),
+        (NEW, "New"),
+        (PROCESSING, "Processing"),
+        (PROCESSED, "Processed"),
+        (ERROR, "Error"),
     )

@@ -1,138 +1,164 @@
-shopify_webhook
-=============================
+# Shopify Webhook
+This is a small Django app that listens for incoming webhooks, and then translates those into calls against the Open edX REST APIs.
 
-|pypi-badge| |ci-badge| |codecov-badge| |doc-badge| |pyversions-badge|
-|license-badge|
+It provides the following endpoints:
 
-The ``README.rst`` file should start with a brief description of the repository,
-which sets it in the context of other repositories under the ``edx``
-organization. It should make clear where this fits in to the overall edX
-codebase.
+* `webhooks/shopify/order/create`  
+* `webhooks/shopify/order/cancel`  
 
-Reports for CME 
+  These endpoints accept a POST request with JSON
+  data, as they would be received by a [Shopify
+  webhook](https://help.shopify.com/en/manual/orders/notifications/webhooks)
+  firing.
 
-Overview (please modify)
-------------------------
+---
 
-The ``README.rst`` file should then provide an overview of the code in this
-repository, including the main components and useful entry points for starting
-to understand the code in more detail.
+## Getting started
 
-Documentation
--------------
+### Method 1: (Preferable for Production)
 
-(TODO: `Set up documentation <https://openedx.atlassian.net/wiki/spaces/DOC/pages/21627535/Publish+Documentation+on+Read+the+Docs>`_)
+1. **Run the following command to add this plugin as requirement**:
+   
+   ```
+   tutor config save --append OPENEDX_EXTRA_PIP_REQUIREMENTS=git+https://replace-this-url/shopify_webhook.git
+   ```
+2. **Now build image using**:
+   
+   ```
+   tutor images build openedx --no-cache
+   ```
 
-Development Workflow
---------------------
+### Method 2: (Preferable for Development)
 
-One Time Setup
-~~~~~~~~~~~~~~
-.. code-block::
+1. **Clone this repo inside the following directory**:
+   
+   ```
+   $(tutor config printroot)/env/build/openedx/requirements
+   ```
+2. **Locate the ``private.txt`` file in the same directory and add the following in it**:
+   
+   ``` yaml
+   -e ./shopify_webhook/
+   ```
+  
+3. **Now build image using**:
+   
+   ```
+   tutor images build openedx --no-cache
+   ```
 
-  # Clone the repository
-  git clone git@github.com:edx/shopify_webhook.git
-  cd shopify_webhook
+---
 
-  # Set up a virtualenv using virtualenvwrapper with the same name as the repo and activate it
-  mkvirtualenv -p python3.8 shopify_webhook
+## To apply the migrations:
 
+1. **Run the following command**:
+   
+   ```
+   tutor local run lms ./manage.py lms makemigrations
+   ```
 
-Every time you develop something in this repo
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. code-block::
+---
 
-  # Activate the virtualenv
-  workon shopify_webhook
+## Create OAuth2 Client
 
-  # Grab the latest code
-  git checkout main
-  git pull
+1. Go to `{replace-lms-url}/admin/oauth2_provider/application/`  
 
-  # Install/update the dev requirements
-  make requirements
+2. Select **Add application**  
 
-  # Run the tests and quality checks (to verify the status before you make any changes)
-  make validate
+3. **Client id**: webhook_receiver   
 
-  # Make a new branch for your changes
-  git checkout -b <your_github_username>/<short_description>
+4. Select a **User** that has global _Staff_ permissions. 
 
-  # Using your favorite editor, edit the code to make your change.
-  vim …
+5. Leave **Redirect uris** blank.
 
-  # Run your new tests
-  pytest ./path/to/new/tests
+6. For **Client type,** select **Confidential**. 
 
-  # Run all the tests and quality checks
-  make validate
+7. For **Authorization grant type**, select **Client credentials**.  
 
-  # Commit all your changes
-  git commit …
-  git push
+8. Leave **Client secret** unchanged.
 
-  # Open a PR and ask for review.
+9. For **Name**, enter `webhook_receiver`, or any other client
+   name you find appropriate.
 
-License
--------
+10. Leave **Skip authorization** unchecked.
 
-The code in this repository is licensed under the Not open source unless
-otherwise noted.
+11. Select **Save**.  
 
-Please see `LICENSE.txt <LICENSE.txt>`_ for details.
+---
 
-How To Contribute
------------------
+## Plugin installation
+1. Copy the content of ``shopify_configs.py`` file from this repo.  
 
-Contributions are very welcome.
-Please read `How To Contribute <https://github.com/edx/edx-platform/blob/master/CONTRIBUTING.rst>`_ for details.
-Even though they were written with ``edx-platform`` in mind, the guidelines
-should be followed for all Open edX projects.
+2. Go to ``$(tutor config printroot)/env/plugins/`` directory and create a file ``shopify_configs.py``.  
 
-The pull request description template should be automatically applied if you are creating a pull request from GitHub. Otherwise you
-can find it at `PULL_REQUEST_TEMPLATE.md <.github/PULL_REQUEST_TEMPLATE.md>`_.
+3. Now paste the copied content in this file and save it.  
 
-The issue report template should be automatically applied if you are creating an issue on GitHub as well. Otherwise you
-can find it at `ISSUE_TEMPLATE.md <.github/ISSUE_TEMPLATE.md>`_.
+4. Run the following command to enable this plugin:
+   ```
+   tutor plugins enable shopify_configs
+   ```
 
-Reporting Security Issues
--------------------------
+## Plugin configs
+1. WEBHOOK_RECEIVER_EDX_OAUTH2_KEY: `Client id` from `OAuth2 Client` setup
+2. WEBHOOK_RECEIVER_EDX_OAUTH2_SECRET: `Client secret` from `OAuth2 Client` setup
+3. shop_domain: Your shopify shop domain
+4. api_key: Get from `https://admin.shopify.com/store/{your-shop-id}/settings/notifications/webhooks` page
+5. SHOPIFY_ADMIN_API_URL: "https://{your-shop-id}.myshopify.com/admin/api/2024-10/graphql.json"
+6. SHOPIFY_ADMIN_API_ACCESS_TOKEN: `access token` that was auto-generated while `app` was created in shopify.
 
-Please do not report security issues in public. Please email security@edx.org.
+---
+## Shopify admin API
+1. Go to your `Apps and sales channels` page using shopify admin account.
+2. Select the app which you are using for `access token` as `SHOPIFY_ADMIN_API_ACCESS_TOKEN`.
+3. Click on `Configuration` tab.
+4. Click on `edit` button in `Admin API integration` section.
+5. In `Admin API access scopes` select these three options:  
+   `read_customers`, `read_orders` and `read_products`
 
-Getting Help
-------------
+---
 
-If you're having trouble, we have discussion forums at https://discuss.openedx.org where you can connect with others in the community.
+## Setup on shopify
+### Webhook for product purchase:
+1. Go to shopify webhook notification setting:  
+   ``` yaml
+   https://admin.shopify.com/store/{replace-shop-id}/settings/notifications/webhooks 
+   ```
+ 
+2. Select **Create webhook**  
 
-Our real-time conversations are on Slack. You can request a `Slack invitation`_, then join our `community Slack workspace`_.
+3. Select **Order fulfillment** from **Event** dropdown  
 
-For more information about these options, see the `Getting Help`_ page.
+4. Set the following as **url**:  
+   ``` yaml
+   https://{replace-lms-url}/webhooks/shopify/order/create 
+   ```
 
-.. _Slack invitation: https://openedx-slack-invite.herokuapp.com/
-.. _community Slack workspace: https://openedx.slack.com/
-.. _Getting Help: https://openedx.org/getting-help
+5. Select **2024-10 (Latest)** (Or the latest stable version) from **Webhook API version** dropdown  
 
-.. |pypi-badge| image:: https://img.shields.io/pypi/v/shopify_webhook.svg
-    :target: https://pypi.python.org/pypi/shopify_webhook/
-    :alt: PyPI
+6. Click on **Save**.  
+##
+### Webhook to catch tag removal (subscription cancellation):
+1. On shopify webhook notification setting page select **Create webhook**  
 
-.. |ci-badge| image:: https://github.com/edx/shopify_webhook/workflows/Python%20CI/badge.svg?branch=main
-    :target: https://github.com/edx/shopify_webhook/actions
-    :alt: CI
+3. Select **Customer tags removed** from **Event** dropdown  
 
-.. |codecov-badge| image:: https://codecov.io/github/edx/shopify_webhook/coverage.svg?branch=main
-    :target: https://codecov.io/github/edx/shopify_webhook?branch=main
-    :alt: Codecov
+4. Set the following as **url**:  
+   ``` yaml
+   https://{replace-lms-url}/webhooks/shopify/order/cancel 
+   ```
 
-.. |doc-badge| image:: https://readthedocs.org/projects/shopify_webhook/badge/?version=latest
-    :target: https://shopify_webhook.readthedocs.io/en/latest/
-    :alt: Documentation
+5. Select **2024-10 (Latest)** (Or the latest stable version) from **Webhook API version** dropdown  
 
-.. |pyversions-badge| image:: https://img.shields.io/pypi/pyversions/shopify_webhook.svg
-    :target: https://pypi.python.org/pypi/shopify_webhook/
-    :alt: Supported Python versions
+6. Click on **Save**.  
+---
 
-.. |license-badge| image:: https://img.shields.io/github/license/edx/shopify_webhook.svg
-    :target: https://github.com/edx/shopify_webhook/blob/main/LICENSE.txt
-    :alt: License
+## Product creation on shopify
+1. While creating product on shopify, use **course_id** from openedx as **SKU (Stock Keeping Unit)**:  
+   For example: 
+   `course-v1:Org_name+CS001+2024`
+ 
+2. You can specify the course mode in the product by following these steps:  
+   1. In **Variants** section, click on **Add options like size or color**  
+   2. Enter **Course mode** as **Option name**
+   3. Enter a valid openedx course mode  as **Option values**:  
+      For example: `no-id-professional`  

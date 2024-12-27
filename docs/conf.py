@@ -14,15 +14,19 @@ serve to show the default.
 import os
 import re
 import sys
+from datetime import datetime
 from subprocess import check_call
 
-import edx_theme
 from django import setup as django_setup
 
 
 def get_version(*file_paths):
     """
-    Extract the version string from the file at the given relative path fragments.
+    Extract the version string from the file.
+
+    Input:
+     - file_paths: relative path fragments to file with
+                   version string
     """
     filename = os.path.join(os.path.dirname(__file__), *file_paths)
     version_file = open(filename, encoding="utf8").read()
@@ -36,7 +40,6 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(REPO_ROOT)
 
 VERSION = get_version('../shopify_webhook', '__init__.py')
-
 # Configure Django for autodoc usage
 os.environ['DJANGO_SETTINGS_MODULE'] = 'test_settings'
 django_setup()
@@ -59,7 +62,6 @@ django_setup()
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'edx_theme',
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
@@ -90,10 +92,19 @@ top_level_doc = 'index'
 
 # General information about the project.
 project = 'shopify_webhook'
-copyright = edx_theme.COPYRIGHT  # pylint: disable=redefined-builtin
-author = edx_theme.AUTHOR
+copyright = f'{datetime.now().year}, Axim Collaborative, Inc.'  # pylint: disable=redefined-builtin
+author = 'Axim Collaborative, Inc.'
 project_title = 'shopify_webhook'
 documentation_title = f"{project_title}"
+
+# Set display_github to False if you don't want "edit on Github" button
+html_context = {
+    "display_github": True,  # Integrate GitHub
+    "github_user": "edx",  # Username
+    "github_repo": 'shopify_webhook',  # Repo name
+    "github_version": "main",  # Version
+    "conf_py_path": "/docs/",  # Path in the checkout to the docs root
+}
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -109,7 +120,7 @@ release = VERSION
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -123,7 +134,14 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = [
+    '_build',
+    'Thumbs.db',
+    '.DS_Store',
+    # This file is intended as a guide for developers browsing the source tree,
+    # not to be rendered into the output docs.
+    'decisions/README.rst',
+]
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -156,22 +174,51 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
-
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 
-html_theme = 'edx_theme'
+html_theme = 'sphinx_book_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {
+    "repository_url": "https://github.com/openedx/shopify_webhook",
+    "repository_branch": 'main',
+    "path_to_docs": "docs/",
+    "home_page_in_toc": True,
+    "use_repository_button": True,
+    "use_issues_button": True,
+    "use_edit_page_button": True,
+    # Please don't change unless you know what you're doing.
+    "extra_footer": """
+        <a rel="license" href="https://creativecommons.org/licenses/by-sa/4.0/">
+            <img
+                alt="Creative Commons License"
+                style="border-width:0"
+                src="https://i.creativecommons.org/l/by-sa/4.0/80x15.png"/>
+        </a>
+        <br>
+        These works by
+            <a
+                xmlns:cc="https://creativecommons.org/ns#"
+                href="https://openedx.org"
+                property="cc:attributionName"
+                rel="cc:attributionURL"
+            >Axim Collaborative, Inc</a>
+        are licensed under a
+            <a
+                rel="license"
+                href="https://creativecommons.org/licenses/by-sa/4.0/"
+            >Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+    """
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = [edx_theme.get_html_theme_path()]
+# html_theme_path = []
 
 # The name for this set of Sphinx documents.
 # "<project> v<release> documentation" by default.
@@ -185,13 +232,14 @@ html_theme_path = [edx_theme.get_html_theme_path()]
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
 #
-# html_logo = None
+html_logo = "https://logos.openedx.org/open-edx-logo-color.png"
 
-# The name of an image file (relative to this directory) to use as a favicon of
-# the docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
+# The name of an image file (relative to this directory) to use as a favicon
+# of the docs.  This file should be a Windows icon file (.ico) being 16x16
+# or 32x32
 # pixels large.
 #
-# html_favicon = None
+html_favicon = "https://logos.openedx.org/open-edx-favicon.ico"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -361,7 +409,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (top_level_doc, project_title, documentation_title,
-     author, project_title, 'Reports for CME ',
+     author, project_title, 'One-line description for README and other doc files.',
      'Miscellaneous'),
 ]
 
@@ -470,7 +518,7 @@ epub_exclude_files = ['search.html']
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3.8', None),
-    'django': ('https://docs.djangoproject.com/en/2.2/', 'https://docs.djangoproject.com/en/2.2/_objects/'),
+    'django': ('https://docs.djangoproject.com/en/3.2/', 'https://docs.djangoproject.com/en/3.2/_objects/'),
     'model_utils': ('https://django-model-utils.readthedocs.io/en/latest/', None),
 }
 

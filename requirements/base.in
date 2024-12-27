@@ -3,3 +3,5 @@
 
 Django             # Web application framework
 django_fsm
+
+openedx-atlas

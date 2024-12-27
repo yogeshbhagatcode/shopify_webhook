@@ -3,8 +3,8 @@ branch = True
 data_file = .coverage
 source=shopify_webhook
 omit =
-    test_settings
-    *migrations*
+    test_settings.py
+    */migrations/*
     *admin.py
-    *static*
-    *templates*
+    */static/*
+    */templates/*

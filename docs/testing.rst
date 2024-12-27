@@ -1,7 +1,7 @@
 .. _chapter-testing:
 
 Testing
-=======
+#######
 
 shopify_webhook has an assortment of test cases and code quality
 checks to catch potential problems during development.  To run them all in the

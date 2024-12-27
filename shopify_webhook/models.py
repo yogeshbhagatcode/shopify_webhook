@@ -20,13 +20,14 @@ from . import STATE
 import logging
 
 
-APP_LABEL = 'shopify_webhook'
+APP_LABEL = "shopify_webhook"
 
 logger = logging.getLogger(__name__)
 
 
 class WebhookData(ConcurrentTransitionMixin, Model):
     """Abstract base class for webhook data."""
+
     class Meta:
         app_label = APP_LABEL
         abstract = True
@@ -40,9 +41,7 @@ class WebhookData(ConcurrentTransitionMixin, Model):
 
     # We know we always want to record the webhook source, and the
     # date we received it.
-    status = FSMIntegerField(choices=CHOICES,
-                             default=NEW,
-                             protected=True)
+    status = FSMIntegerField(choices=CHOICES, default=NEW, protected=True)
     source = GenericIPAddressField(null=True)
     received = DateTimeField(default=timezone.now)
     headers = JSONField()
@@ -51,25 +50,22 @@ class WebhookData(ConcurrentTransitionMixin, Model):
     # verification.
     body = BinaryField()
 
-    @transition(field=status,
-                source=NEW,
-                target=PROCESSING,
-                on_error=ERROR)
+    @transition(field=status, source=NEW, target=PROCESSING, on_error=ERROR)
     def start_processing(self):
-        logger.debug('Processing webhook %s' % self.id)
+        logger.debug("Processing webhook %s" % self.id)
 
-    @transition(field=status,
-                source=PROCESSING,
-                target=PROCESSED,
-                on_error=ERROR)
+    @transition(field=status, source=PROCESSING, target=PROCESSED, on_error=ERROR)
     def finish_processing(self):
-        logger.debug('Finishing webhook %s' % self.id)
+        logger.debug("Finishing webhook %s" % self.id)
 
-    @transition(field=status,
-                source=PROCESSING,
-                target=ERROR)
+    @transition(field=status, source=PROCESSING, target=ERROR)
     def fail(self):
-        logger.debug('Failed to process webhook %s' % self.id)
+        logger.debug("Failed to process webhook %s" % self.id)
+
+    # Set the status after processing failed orders when called from process_failed_orders management command
+    @transition(field=status, target=PROCESSED, on_error=ERROR)
+    def set_finish(self):
+        logger.debug("Finishing webhook %s" % self.id)
 
 
 class JSONWebhookData(WebhookData):
@@ -100,29 +96,24 @@ class Order(ConcurrentTransitionMixin, Model):
     first_name = CharField(max_length=254)
     last_name = CharField(max_length=254)
     received = DateTimeField(default=timezone.now)
-    status = FSMIntegerField(choices=CHOICES,
-                             default=NEW,
-                             protected=True)
+    status = FSMIntegerField(choices=CHOICES, default=NEW, protected=True)
 
-    @transition(field=status,
-                source=NEW,
-                target=PROCESSING,
-                on_error=ERROR)
+    @transition(field=status, source=NEW, target=PROCESSING, on_error=ERROR)
     def start_processing(self):
-        logger.debug('Processing order %s' % self.id)
+        logger.debug("Processing order %s" % self.id)
 
-    @transition(field=status,
-                source=PROCESSING,
-                target=PROCESSED,
-                on_error=ERROR)
+    @transition(field=status, source=PROCESSING, target=PROCESSED, on_error=ERROR)
     def finish_processing(self):
-        logger.debug('Finishing order %s' % self.id)
+        logger.debug("Finishing order %s" % self.id)
 
-    @transition(field=status,
-                source=PROCESSING,
-                target=ERROR)
+    @transition(field=status, source=PROCESSING, target=ERROR)
     def fail(self):
-        logger.debug('Failed to process order %s' % self.id)
+        logger.debug("Failed to process order %s" % self.id)
+
+    # Set the status for failed orders when called from process_failed_orders management command
+    @transition(field=status, target=NEW, on_error=ERROR)
+    def set_new(self):
+        logger.debug("Processing order %s" % self.id)
 
 
 class OrderItem(ConcurrentTransitionMixin, Model):
@@ -139,33 +130,21 @@ class OrderItem(ConcurrentTransitionMixin, Model):
 
     sku = CharField(max_length=254)
     email = EmailField()
-    status = FSMIntegerField(choices=CHOICES,
-                             default=NEW,
-                             protected=True)
+    status = FSMIntegerField(choices=CHOICES, default=NEW, protected=True)
 
-    @transition(field=status,
-                source=NEW,
-                target=PROCESSING,
-                on_error=ERROR)
+    @transition(field=status, source=NEW, target=PROCESSING, on_error=ERROR)
     def start_processing(self):
-        logger.debug('Processing item %s for order %s' % (self.id,
-                                                          self.order.id))
+        logger.debug("Processing item %s for order %s" % (self.id, self.order.id))
 
-    @transition(field=status,
-                source=PROCESSING,
-                target=PROCESSED,
-                on_error=ERROR)
+    @transition(field=status, source=PROCESSING, target=PROCESSED, on_error=ERROR)
     def finish_processing(self):
-        logger.debug('Finishing item %s for order %s' % (self.id,
-                                                         self.order.id))
+        logger.debug("Finishing item %s for order %s" % (self.id, self.order.id))
 
-    @transition(field=status,
-                source=PROCESSING,
-                target=ERROR)
+    @transition(field=status, source=PROCESSING, target=ERROR)
     def fail(self):
-        logger.debug('Failed to process item %s '
-                     'for order %s' % (self.id,
-                                       self.order.id))
+        logger.debug(
+            "Failed to process item %s for order %s" % (self.id, self.order.id)
+        )
 
 
 class ShopifyOrder(Order):
@@ -174,11 +153,7 @@ class ShopifyOrder(Order):
         app_label = APP_LABEL
         abstract = False
 
-    webhook = ForeignKey(
-        JSONWebhookData,
-        on_delete=SET_NULL,
-        null=True
-    )
+    webhook = ForeignKey(JSONWebhookData, on_delete=SET_NULL, null=True)
 
 
 class ShopifyOrderItem(OrderItem):
@@ -187,11 +162,9 @@ class ShopifyOrderItem(OrderItem):
         app_label = APP_LABEL
         abstract = False
         constraints = [
-            UniqueConstraint(fields=['order', 'sku', 'email'],
-                             name='unique_shopify_order_sku_email')
+            UniqueConstraint(
+                fields=["order", "sku", "email"], name="unique_shopify_order_sku_email"
+            )
         ]
 
-    order = ForeignKey(
-        ShopifyOrder,
-        on_delete=PROTECT
-    )
+    order = ForeignKey(ShopifyOrder, on_delete=PROTECT)

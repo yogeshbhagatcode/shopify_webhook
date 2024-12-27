@@ -1,2 +1,3 @@
 Django
 django_fsm
+openedx-atlas
